@@ -20,6 +20,12 @@ def column_to_float(dataSet):
         for column in range(featLen):
             data[column] = float(data[column].strip())
 
+# 将全部列都转换为int类型
+def column_to_int(dataSet):
+    featLen = len(dataSet[0])
+    for data in dataSet:
+        for column in range(featLen):
+            data[column] = int(data[column].strip())
 
 # 将数据集随机分成N块，方便交叉验证，其中一块是测试集，其他四块是训练集
 def spiltDataSet(dataSet, n_folds):
@@ -129,9 +135,8 @@ def sub_spilt(root, n_features, max_depth, min_size, depth):
         # print 'testing_right'
         sub_spilt(root['right'], n_features, max_depth, min_size, depth + 1)
 
-        # 构造决策树
 
-
+# 构造决策树
 def build_tree(dataSet, n_features, max_depth, min_size):
     root = get_best_spilt(dataSet, n_features)
     sub_spilt(root, n_features, max_depth, min_size, 1)
@@ -192,6 +197,7 @@ def servable(actual_row):
     n_trees = 11
     folds = spiltDataSet(dataSet, n_folds)  # 先是切割数据集
     scores = []
+    predict_values = []
     for fold in folds:
         train_set = folds[
                     :]  # 此处不能简单地用train_set=folds，这样用属于引用,那么当train_set的值改变的时候，folds的值也会改变，所以要用复制的形式。（L[:]）能够复制序列，D.copy() 能够复制字典，list能够生成拷贝 list(L)
@@ -204,15 +210,15 @@ def servable(actual_row):
 
 if __name__ == '__main__':
     seed(1)
-    dataSet = loadCSV('D:/mydata/planedata.csv')
+    dataSet = loadCSV('D:/mydata/moredata24.csv')
     column_to_float(dataSet)
     n_folds = 5
-    max_depth = 12
+    max_depth = 15
     min_size = 1
     ratio = 1.0
     # n_features=sqrt(len(dataSet)-1)
-    n_features = 11
-    n_trees = 11
+    n_features = 15
+    n_trees = 20
     folds = spiltDataSet(dataSet, n_folds)  # 先是切割数据集
     scores = []
     for fold in folds:
@@ -230,7 +236,9 @@ if __name__ == '__main__':
             # for row in test_set:
             # print row[-1]
         actual = [row[-1] for row in fold]
-        predict_values = random_forest(train_set, test_set, ratio, n_features, max_depth, min_size, n_trees)
+        trees = random_forest(train_set, ratio, n_features, max_depth, min_size, n_trees)
+        predict_values = [bagging_predict(trees, test_row) for test_row in test_set]
+        #predict_values = random_forest(train_set, test_set, ratio, n_features, max_depth, min_size, n_trees)
         accur = accuracy(predict_values, actual)
         scores.append(accur)
     print('Trees is %d' % n_trees)
